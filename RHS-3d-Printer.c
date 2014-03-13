@@ -1,10 +1,12 @@
 #pragma config(Motor,  port2,           xMotor,     tmotorNormal, openLoop)
 #pragma config(Motor,  port3,           yMotor,     tmotorNormal, openLoop)
 #pragma config(Motor,  port4,           zMotor,     tmotorNormal, openLoop)
+#pragma config(Motor,  port5,           pMotor,     tmotorNormal, openLoop)
 #pragma config(Sensor, dgtl1, 				  topSensor,   sensorTouch)
 #pragma config(Sensor, dgtl2, 				  leftSensor,   sensorTouch)
 #pragma config(Sensor, dgtl3, 				  bottomSensor,   sensorTouch)
 #pragma config(Sensor, dgtl4, 				  rightSensor,   sensorTouch)
+#pragma config(Sensor, dgtl11, 				  modeSensor,   sensorTouch)
 #pragma config(Sensor, dgtl12, 				  killSensor,   sensorTouch)
 
 #pragma DebuggerWindows("Locals")
@@ -16,6 +18,8 @@
 	digital 2 sensor		: LEFT
 	digital 3 sensor		: BOTTOM
 	digital 4 sensor		: RIGHT
+	digital 11 sensor		: DEBUG MODE SWITCH
+	digital 12 sensor		: KILL SWITCH
 
 	set up canvas, find width and height
 
@@ -28,7 +32,7 @@
 
 
 	TODO :
-		- bad KILL SWITCH implementation!  SensorValue(rightSensor) == 0
+		- bad KILL SWITCH implementation!  SensorValue(killSensor) == 0
 */
 
 int MAX_SPEED = 127;
@@ -42,6 +46,11 @@ int cursor_y = 0;
 int canvas_width = 0;
 int canvas_height = 0;
 
+
+bool debugMode = false; // true will terminate program, (or wait until program is terminated)
+												//   then go into debugMode which uses the killswitch to move the cursor into place,
+												//   then goes back to debugMode = false
+
 // reset to 0,0
 void resetCursor(){
 	// move y axis all the way to the top
@@ -52,6 +61,9 @@ void resetCursor(){
 		motor[yMotor] = HALF_SPEED * -1;
 	}
 	motor[yMotor] = 0;
+	if(SensorValue(killSensor) == 1){
+		return;
+	}
 
 	// move x axis
 
@@ -74,7 +86,7 @@ void calibrate(){
 	// move y axis all the way to the bottom
 
 	// detect when the toggle switch is triggered
-	while(SensorValue(bottomSensor) == 0 && SensorValue(killSensor) == 0)		// true IS pressed in
+	while(SensorValue(bottomSensor) == 0 && SensorValue(killSensor) == 0 && SensorValue(modeSensor) == 0)		// true IS pressed in
 	{
 		motor[yMotor] = HALF_SPEED;
 		if(distance_counter++ == HALF_SPEED){
@@ -84,11 +96,14 @@ void calibrate(){
 	}
 	motor[yMotor] = 0;
 	canvas_height = cursor_y;
+	if(SensorValue(killSensor) == 1){
+		return;
+	}
 
 	// move x axis all the way to the right
 	distance_counter = 0;
 	// detect when the toggle switch is triggered
-	while(SensorValue(rightSensor) == 0 && SensorValue(killSensor) == 0)		// true IS pressed in
+	while(SensorValue(rightSensor) == 0 && SensorValue(killSensor) == 0 && SensorValue(modeSensor) == 0)		// true IS pressed in
 	{
 		motor[xMotor] = HALF_SPEED;
 		if(distance_counter++ == HALF_SPEED){
@@ -102,6 +117,9 @@ void calibrate(){
 	writeDebugStreamLine("canvas_width : %d", canvas_width);
 	writeDebugStreamLine("canvas_height : %d", canvas_height);
 
+	if(SensorValue(modeSensor) == 1){
+		debugMode = true;
+	}
 }
 
 
@@ -127,7 +145,7 @@ void moveToPoint(int x, int y){
 			stepper = 1;
 		}
 
-		while(cursor_y != y && SensorValue(killSensor) == 0)
+		while(cursor_y != y && SensorValue(killSensor) == 0 && SensorValue(modeSensor) == 0)
 		{
 			motor[yMotor] = y_speed;
 			if(distance_counter++ == HALF_SPEED){
@@ -136,6 +154,9 @@ void moveToPoint(int x, int y){
 			}
 		}
 		motor[yMotor] = 0;
+		if(SensorValue(killSensor) == 1){
+			return;
+		}
 	}
 
 	// then move down x axis
@@ -148,7 +169,7 @@ void moveToPoint(int x, int y){
 			stepper = 1;
 		}
 		distance_counter = 0;
-		while(cursor_x != x && SensorValue(killSensor) == 0)
+		while(cursor_x != x && SensorValue(killSensor) == 0 && SensorValue(modeSensor) == 0)
 		{
 			motor[xMotor] = x_speed;
 			if(distance_counter++ == HALF_SPEED){
@@ -157,11 +178,20 @@ void moveToPoint(int x, int y){
 			}
 		}
 		motor[xMotor] = 0;
+		if(SensorValue(killSensor) == 1){
+			return;
+		}
+	}
+
+	if(SensorValue(modeSensor) == 1){
+		debugMode = true;
 	}
 
 }
 
 // apply pixel
+// pMotor -> pixel motor -> port 5
+
 
 
 void printer3d(){
@@ -172,19 +202,34 @@ void printer3d(){
 
 		// get canvas information
 		calibrate();
+		if(debugMode || SensorValue(killSensor) == 1){
+			return;
+		}
 		wait1Msec(500);
 
 		// ok move back
 		resetCursor();
+		if(debugMode || SensorValue(killSensor) == 1){
+			return;
+		}
 		wait1Msec(1500);
 
 		moveToPoint(15000,15000);
+		if(debugMode || SensorValue(killSensor) == 1){
+			return;
+		}
 		wait1Msec(700);
 
 		moveToPoint(30000,30000);
+		if(debugMode || SensorValue(killSensor) == 1){
+			return;
+		}
 		wait1Msec(700);
 
 		moveToPoint(20000,20000);
+		if(debugMode || SensorValue(killSensor) == 1){
+			return;
+		}
 		wait1Msec(700);
 		//moveToPoint(500,2000);
 		//wait1Msec(700);
@@ -220,6 +265,7 @@ void debugCursor(){
 	motor[xMotor] = 0;
 	wait1Msec(2000);
 
+	debugMode = false;
 }
 
 task main()
@@ -227,14 +273,20 @@ task main()
 	wait1Msec(2000);						// Robot waits for 2000 milliseconds before executing program
 
 
-	// debug stuff
-	debugCursor();
+	while(true){
 
-	// actual program
-	//printer3d();
-	//while(SensorValue(killSensor) == 0){ // kill switch
-	//}
+		if(debugMode){
+			// debug stuff
+			debugCursor();
+		}else{
+			// actual program
+			printer3d();
+		}
 
+		//while(SensorValue(killSensor) == 0){ // kill switch
+		//}
+
+	}
 }
 
 // Program ends, and the robot stops
