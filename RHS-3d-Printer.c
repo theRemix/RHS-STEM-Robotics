@@ -38,7 +38,9 @@
 int MAX_SPEED = 127;
 int HALF_SPEED = 63;
 int CURSOR_SPEED = 100;
-
+int SQUEEZE_SPEED = 100;
+int SQUEEZE_AMOUNT = 1500; // this will be limited by a switch later
+int UNSQUEEZE_WAIT_TIME = 1000; // will be longer in real life
 
 
 int cursor_x = 0;
@@ -46,7 +48,7 @@ int cursor_y = 0;
 int canvas_width = 0;
 int canvas_height = 0;
 
-
+bool programComplete = false;
 bool debugMode = false; // true will terminate program, (or wait until program is terminated)
 												//   then go into debugMode which uses the killswitch to move the cursor into place,
 												//   then goes back to debugMode = false
@@ -191,7 +193,17 @@ void moveToPoint(int x, int y){
 
 // apply pixel
 // pMotor -> pixel motor -> port 5
+void applyPixel(){
 
+	motor[pMotor] = SQUEEZE_SPEED;
+	wait1Msec(SQUEEZE_AMOUNT);
+
+	motor[pMotor] = -SQUEEZE_SPEED;
+	wait1Msec(SQUEEZE_AMOUNT);
+
+	motor[pMotor] = 0;
+	wait1Msec(UNSQUEEZE_WAIT_TIME);
+}
 
 
 void printer3d(){
@@ -206,36 +218,200 @@ void printer3d(){
 		if(debugMode || SensorValue(killSensor) == 1){
 			return;
 		}
-		wait1Msec(500);*/
-
 		// ok move back
 		resetCursor();
+		wait1Msec(500);*/
+
 		if(debugMode || SensorValue(killSensor) == 1){
 			return;
 		}
 		wait1Msec(1500);
 
-		moveToPoint(15000,15000);
+		moveToPoint(1500,1500);
 		if(debugMode || SensorValue(killSensor) == 1){
 			return;
 		}
 		wait1Msec(700);
 
-		moveToPoint(30000,30000);
-		if(debugMode || SensorValue(killSensor) == 1){
-			return;
-		}
-		wait1Msec(700);
+		// drop first drop
+		applyPixel();
 
-		moveToPoint(20000,20000);
+		// x:1 y:0
+		moveToPoint(2000,1500);
 		if(debugMode || SensorValue(killSensor) == 1){
 			return;
 		}
-		wait1Msec(700);
-		//moveToPoint(500,2000);
-		//wait1Msec(700);
-		//moveToPoint(500,500);
-		//wait1Msec(700);
+		applyPixel();
+
+		// x:2 y:0
+		moveToPoint(2500,1500);
+		if(debugMode || SensorValue(killSensor) == 1){
+			return;
+		}
+		applyPixel();
+
+		// x:3 y:0
+		moveToPoint(3000,1500);
+		if(debugMode || SensorValue(killSensor) == 1){
+			return;
+		}
+		applyPixel();
+
+		// x:4 y:0
+		moveToPoint(3500,1500);
+		if(debugMode || SensorValue(killSensor) == 1){
+			return;
+		}
+		applyPixel();
+
+		// ##
+		// x:4 y:1
+		moveToPoint(3500,2000);
+		if(debugMode || SensorValue(killSensor) == 1){
+			return;
+		}
+		applyPixel();
+
+		// x:3 y:1
+		moveToPoint(3000,2000);
+		if(debugMode || SensorValue(killSensor) == 1){
+			return;
+		}
+		applyPixel();
+
+		// x:2 y:1
+		moveToPoint(2500,2000);
+		if(debugMode || SensorValue(killSensor) == 1){
+			return;
+		}
+		applyPixel();
+
+		// x:1 y:1
+		moveToPoint(2000,2000);
+		if(debugMode || SensorValue(killSensor) == 1){
+			return;
+		}
+		applyPixel();
+
+		// x:0 y:1
+		moveToPoint(1500,2000);
+		if(debugMode || SensorValue(killSensor) == 1){
+			return;
+		}
+		applyPixel();
+
+		// ##
+		// x:0 y:2
+		moveToPoint(1500,2500);
+		if(debugMode || SensorValue(killSensor) == 1){
+			return;
+		}
+		applyPixel();
+
+		// x:1 y:2
+		moveToPoint(2000,2500);
+		if(debugMode || SensorValue(killSensor) == 1){
+			return;
+		}
+		applyPixel();
+
+		// x:2 y:2
+		moveToPoint(2500,2500);
+		if(debugMode || SensorValue(killSensor) == 1){
+			return;
+		}
+		applyPixel();
+
+		// x:3 y:2
+		moveToPoint(3000,2500);
+		if(debugMode || SensorValue(killSensor) == 1){
+			return;
+		}
+		applyPixel();
+
+		// x:4 y:2
+		moveToPoint(3500,2500);
+		if(debugMode || SensorValue(killSensor) == 1){
+			return;
+		}
+		applyPixel();
+
+
+		// ##
+		// x:4 y:3
+		moveToPoint(3500,3000);
+		if(debugMode || SensorValue(killSensor) == 1){
+			return;
+		}
+		applyPixel();
+
+		// x:3 y:3
+		moveToPoint(3000,3000);
+		if(debugMode || SensorValue(killSensor) == 1){
+			return;
+		}
+		applyPixel();
+
+		// x:2 y:3
+		moveToPoint(2500,3000);
+		if(debugMode || SensorValue(killSensor) == 1){
+			return;
+		}
+		applyPixel();
+
+		// x:1 y:3
+		moveToPoint(2000,3000);
+		if(debugMode || SensorValue(killSensor) == 1){
+			return;
+		}
+		applyPixel();
+
+		// x:0 y:3
+		moveToPoint(1500,3000);
+		if(debugMode || SensorValue(killSensor) == 1){
+			return;
+		}
+		applyPixel();
+
+
+		// ##
+		// x:0 y:4
+		moveToPoint(1500,3500);
+		if(debugMode || SensorValue(killSensor) == 1){
+			return;
+		}
+		applyPixel();
+
+		// x:1 y:4
+		moveToPoint(2000,3500);
+		if(debugMode || SensorValue(killSensor) == 1){
+			return;
+		}
+		applyPixel();
+
+		// x:2 y:4
+		moveToPoint(2500,3500);
+		if(debugMode || SensorValue(killSensor) == 1){
+			return;
+		}
+		applyPixel();
+
+		// x:3 y:4
+		moveToPoint(3000,3500);
+		if(debugMode || SensorValue(killSensor) == 1){
+			return;
+		}
+		applyPixel();
+
+		// x:4 y:4
+		moveToPoint(3500,3500);
+		if(debugMode || SensorValue(killSensor) == 1){
+			return;
+		}
+		applyPixel();
+
+		resetCursor();
+		programComplete = true;
 }
 
 void debugCursor(){
@@ -274,7 +450,7 @@ task main()
 	wait1Msec(2000);						// Robot waits for 2000 milliseconds before executing program
 
 
-	while(true){
+	while(!programComplete){
 
 		if(debugMode){
 			// debug stuff
