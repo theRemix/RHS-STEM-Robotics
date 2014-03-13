@@ -201,11 +201,12 @@ void printer3d(){
 		wait1Msec(500);
 
 		// get canvas information
+		/* disable for now
 		calibrate();
 		if(debugMode || SensorValue(killSensor) == 1){
 			return;
 		}
-		wait1Msec(500);
+		wait1Msec(500);*/
 
 		// ok move back
 		resetCursor();
