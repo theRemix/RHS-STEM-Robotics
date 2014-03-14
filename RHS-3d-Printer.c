@@ -7,6 +7,7 @@
 #pragma config(Sensor, dgtl3, 				  bottomSensor, sensorTouch)
 #pragma config(Sensor, dgtl4, 				  rightSensor,  sensorTouch)
 #pragma config(Sensor, dgtl5, 				  triggerSensor,sensorTouch)
+#pragma config(Sensor, dgtl6, 				  vertSensor,   sensorTouch)
 #pragma config(Sensor, dgtl11, 				  modeSensor,   sensorTouch)
 #pragma config(Sensor, dgtl12, 				  killSensor,   sensorTouch)
 
@@ -20,6 +21,7 @@
 	digital 3 sensor		: BOTTOM
 	digital 4 sensor		: RIGHT
 	digital 5 sensor    : TRIGGER
+	digital 6 sensor		: VERTICAL Z LIMIT
 	digital 11 sensor		: DEBUG MODE SWITCH
 	digital 12 sensor		: KILL SWITCH
 
@@ -39,13 +41,15 @@
 
 int MAX_SPEED = 127;
 int HALF_SPEED = 63;
+int Z_STEP_SPEED = 40;
 int CURSOR_SPEED = 100;
 int SQUEEZE_SPEED = 100;
 int UNSQUEEZE_WAIT_TIME = 1500; // will be longer in real life
-
+int ZSTEP_DISTANCE = 500; // * 10ms of motor Z_STEP_SPEED  1/49 gear ratio
 
 int cursor_x = 0;
 int cursor_y = 0;
+int cursor_z = 0;
 int canvas_width = 0;
 int canvas_height = 0;
 
@@ -54,7 +58,7 @@ bool debugMode = false; // true will terminate program, (or wait until program i
 												//   then go into debugMode which uses the killswitch to move the cursor into place,
 												//   then goes back to debugMode = false
 
-// reset to 0,0
+// reset to 0,0,0
 void resetCursor(){
 	// move y axis all the way to the top
 
@@ -77,9 +81,26 @@ void resetCursor(){
 	}
 	motor[xMotor] = 0;
 
+	// move z axis
+
+	// detect when the toggle switch is triggered
+	while(SensorValue(vertSensor) == 0 && SensorValue(killSensor) == 0)		// true IS pressed in
+	{
+		motor[zMotor] = HALF_SPEED * -1;
+	}
+	motor[zMotor] = 0;
+	wait1Msec(500);
+	// adjustments
+	motor[zMotor] = HALF_SPEED;
+	wait1Msec(500);
+	motor[zMotor] = 0;
+
+
+
 	// reset values
 	cursor_x = 0;
 	cursor_y = 0;
+	cursor_z = 0;
 }
 
 // calibrate, move on x and y axis to find the distance of the canvas
@@ -192,6 +213,30 @@ void moveToPoint(int x, int y){
 
 }
 
+/*
+	positive step lowers platform
+	negative step raises platform
+*/
+void zStep(int step){
+	int direction = 1;
+	if(step < 0){
+		direction = -1;
+		step *= -1;
+	}
+	for(int i = 0; i < step; i++){
+		int stepper = 0;
+		motor[zMotor] = Z_STEP_SPEED * direction;
+		while(stepper < ZSTEP_DISTANCE && SensorValue(vertSensor) == 0 && SensorValue(killSensor) == 0)		// true IS pressed in
+		{
+			stepper ++;
+			wait1Msec(10);
+		}
+		motor[zMotor] = 0;
+		wait1Msec(500);
+	}
+
+}
+
 // apply pixel
 // pMotor -> pixel motor -> port 5
 void applyPixel(){
@@ -217,27 +262,13 @@ void applyPixel(){
 }
 
 
-void printer3d(){
-		// to start, this will break if the sensor is already touching
-		resetCursor();
 
-		wait1Msec(500);
+/*************************
+ PROGRAM BEGIN
+ ************************/
 
-		// get canvas information
-		/* disable for now
-		calibrate();
-		if(debugMode || SensorValue(killSensor) == 1){
-			return;
-		}
-		// ok move back
-		resetCursor();
-		wait1Msec(500);*/
-
-		if(debugMode || SensorValue(killSensor) == 1){
-			return;
-		}
-		wait1Msec(1500);
-
+void fillSquare(){
+	// start at an origin, and keep coming back to it
 		moveToPoint(1500,1500);
 		if(debugMode || SensorValue(killSensor) == 1){
 			return;
@@ -253,6 +284,7 @@ void printer3d(){
 			return;
 		}
 		applyPixel();
+
 
 		// x:2 y:0
 		moveToPoint(2500,1500);
@@ -420,8 +452,117 @@ void printer3d(){
 			return;
 		}
 		applyPixel();
+}
 
+
+
+void printer3d(){
+		// to start, this will break if the sensor is already touching
 		resetCursor();
+
+		wait1Msec(500);
+
+		// get canvas information
+		/* disable for now
+		calibrate();
+		if(debugMode || SensorValue(killSensor) == 1){
+			return;
+		}
+		// ok move back
+		resetCursor();
+		wait1Msec(500);*/
+
+		if(debugMode || SensorValue(killSensor) == 1){
+			return;
+		}
+		wait1Msec(1500);
+
+
+		moveToPoint(1500,1500);
+		if(debugMode || SensorValue(killSensor) == 1){
+			return;
+		}
+		wait1Msec(700);
+
+		moveToPoint(2000,1500);
+		if(debugMode || SensorValue(killSensor) == 1){
+			return;
+		}
+		wait1Msec(700);
+
+		zStep(1);
+		if(debugMode || SensorValue(killSensor) == 1){
+			return;
+		}
+		wait1Msec(700);
+
+		zStep(1);
+		if(debugMode || SensorValue(killSensor) == 1){
+			return;
+		}
+		wait1Msec(700);
+
+		zStep(-1);
+		if(debugMode || SensorValue(killSensor) == 1){
+			return;
+		}
+		wait1Msec(700);
+
+		zStep(2);
+		if(debugMode || SensorValue(killSensor) == 1){
+			return;
+		}
+		wait1Msec(700);
+
+		zStep(-2);
+		if(debugMode || SensorValue(killSensor) == 1){
+			return;
+		}
+		wait1Msec(700);
+
+
+		/*
+		// z = 0
+		if(debugMode || SensorValue(killSensor) == 1){
+			fillSquare();
+		}
+		wait1Msec(1000);
+		zStep(1);
+
+		// z = 1
+		if(debugMode || SensorValue(killSensor) == 1){
+			fillSquare();
+		}
+		wait1Msec(1000);
+		zStep(1);
+
+		// z = 2
+		if(debugMode || SensorValue(killSensor) == 1){
+			fillSquare();
+		}
+		wait1Msec(1000);
+		zStep(1);
+
+		// z = 3
+		if(debugMode || SensorValue(killSensor) == 1){
+			fillSquare();
+		}
+		wait1Msec(1000);
+		zStep(1);
+
+		// z = 4
+		if(debugMode || SensorValue(killSensor) == 1){
+			fillSquare();
+		}
+		wait1Msec(1000);
+		zStep(1);
+		*/
+
+		// DON'T DO THIS
+		// it'll smash the 3d object
+		// resetCursor();
+		// just move z step down a few
+		zStep(20);
 		programComplete = true;
 }
 
