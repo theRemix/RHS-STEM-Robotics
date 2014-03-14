@@ -2,10 +2,11 @@
 #pragma config(Motor,  port3,           yMotor,     tmotorNormal, openLoop)
 #pragma config(Motor,  port4,           zMotor,     tmotorNormal, openLoop)
 #pragma config(Motor,  port5,           pMotor,     tmotorNormal, openLoop)
-#pragma config(Sensor, dgtl1, 				  topSensor,   sensorTouch)
+#pragma config(Sensor, dgtl1, 				  topSensor,    sensorTouch)
 #pragma config(Sensor, dgtl2, 				  leftSensor,   sensorTouch)
-#pragma config(Sensor, dgtl3, 				  bottomSensor,   sensorTouch)
-#pragma config(Sensor, dgtl4, 				  rightSensor,   sensorTouch)
+#pragma config(Sensor, dgtl3, 				  bottomSensor, sensorTouch)
+#pragma config(Sensor, dgtl4, 				  rightSensor,  sensorTouch)
+#pragma config(Sensor, dgtl5, 				  triggerSensor,sensorTouch)
 #pragma config(Sensor, dgtl11, 				  modeSensor,   sensorTouch)
 #pragma config(Sensor, dgtl12, 				  killSensor,   sensorTouch)
 
@@ -18,6 +19,7 @@
 	digital 2 sensor		: LEFT
 	digital 3 sensor		: BOTTOM
 	digital 4 sensor		: RIGHT
+	digital 5 sensor    : TRIGGER
 	digital 11 sensor		: DEBUG MODE SWITCH
 	digital 12 sensor		: KILL SWITCH
 
@@ -39,8 +41,7 @@ int MAX_SPEED = 127;
 int HALF_SPEED = 63;
 int CURSOR_SPEED = 100;
 int SQUEEZE_SPEED = 100;
-int SQUEEZE_AMOUNT = 1500; // this will be limited by a switch later
-int UNSQUEEZE_WAIT_TIME = 1000; // will be longer in real life
+int UNSQUEEZE_WAIT_TIME = 1500; // will be longer in real life
 
 
 int cursor_x = 0;
@@ -194,12 +195,22 @@ void moveToPoint(int x, int y){
 // apply pixel
 // pMotor -> pixel motor -> port 5
 void applyPixel(){
+	int squeezey = 0;
 
 	motor[pMotor] = SQUEEZE_SPEED;
-	wait1Msec(SQUEEZE_AMOUNT);
+	while(SensorValue(triggerSensor) == 0 && SensorValue(killSensor) == 0){
+		squeezey++;
+		wait1Msec(10);
+	}
+	motor[pMotor] = 0;
+	wait1Msec(500);
 
 	motor[pMotor] = -SQUEEZE_SPEED;
-	wait1Msec(SQUEEZE_AMOUNT);
+	while(squeezey > 0 && SensorValue(killSensor) == 0){
+		squeezey--;
+		wait1Msec(10);
+	}
+	//writeDebugStreamLine("squeezey : %d", squeezey);
 
 	motor[pMotor] = 0;
 	wait1Msec(UNSQUEEZE_WAIT_TIME);
