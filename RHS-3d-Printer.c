@@ -21,7 +21,7 @@
 	digital 3 sensor		: BOTTOM
 	digital 4 sensor		: RIGHT
 	digital 5 sensor    : TRIGGER
-	digital 6 sensor		: VERTICAL Z LIMIT
+	digital 6 sensor		: VERTICAL Z LIMIT   (Z MAX)
 	digital 11 sensor		: DEBUG MODE SWITCH
 	digital 12 sensor		: KILL SWITCH
 
@@ -68,6 +68,15 @@ void resetCursor(){
 		motor[yMotor] = HALF_SPEED * -1;
 	}
 	motor[yMotor] = 0;
+	// adjustments
+	motor[yMotor] = HALF_SPEED;
+	//wait1Msec(900);
+	while(SensorValue(topSensor) == 1 && SensorValue(killSensor) == 0)		// true IS pressed in
+	{
+		motor[yMotor] = HALF_SPEED;
+	}
+	motor[yMotor] = 0;
+
 	if(SensorValue(killSensor) == 1){
 		return;
 	}
@@ -80,19 +89,31 @@ void resetCursor(){
 		motor[xMotor] = HALF_SPEED * -1;
 	}
 	motor[xMotor] = 0;
+	// adjustments
+	motor[xMotor] = HALF_SPEED;
+	//wait1Msec(900);
+	while(SensorValue(leftSensor) == 1 && SensorValue(killSensor) == 0)		// true IS pressed in
+	{
+		motor[xMotor] = HALF_SPEED;
+	}
+	motor[xMotor] = 0;
 
 	// move z axis
 
 	// detect when the toggle switch is triggered
 	while(SensorValue(vertSensor) == 0 && SensorValue(killSensor) == 0)		// true IS pressed in
 	{
-		motor[zMotor] = HALF_SPEED * -1;
+		motor[zMotor] = HALF_SPEED;
 	}
 	motor[zMotor] = 0;
 	wait1Msec(500);
 	// adjustments
-	motor[zMotor] = HALF_SPEED;
-	wait1Msec(500);
+	motor[zMotor] = HALF_SPEED * -1;
+	//wait1Msec(2200); // unpress the limiter
+	while(SensorValue(vertSensor) == 1 && SensorValue(killSensor) == 0)		// true IS pressed in
+	{
+		motor[zMotor] = HALF_SPEED * -1;
+	}
 	motor[zMotor] = 0;
 
 
@@ -218,9 +239,9 @@ void moveToPoint(int x, int y){
 	negative step raises platform
 */
 void zStep(int step){
-	int direction = 1;
+	int direction = -1;
 	if(step < 0){
-		direction = -1;
+		direction = 1;
 		step *= -1;
 	}
 	for(int i = 0; i < step; i++){
@@ -268,6 +289,7 @@ void applyPixel(){
  ************************/
 
 void fillSquare(){
+	//writeDebugStreamLine("in fillSquare");
 	// start at an origin, and keep coming back to it
 		moveToPoint(1500,1500);
 		if(debugMode || SensorValue(killSensor) == 1){
@@ -478,85 +500,46 @@ void printer3d(){
 		wait1Msec(1500);
 
 
-		moveToPoint(1500,1500);
-		if(debugMode || SensorValue(killSensor) == 1){
-			return;
-		}
-		wait1Msec(700);
-
-		moveToPoint(2000,1500);
-		if(debugMode || SensorValue(killSensor) == 1){
-			return;
-		}
-		wait1Msec(700);
-
-		zStep(1);
-		if(debugMode || SensorValue(killSensor) == 1){
-			return;
-		}
-		wait1Msec(700);
-
-		zStep(1);
-		if(debugMode || SensorValue(killSensor) == 1){
-			return;
-		}
-		wait1Msec(700);
-
-		zStep(-1);
-		if(debugMode || SensorValue(killSensor) == 1){
-			return;
-		}
-		wait1Msec(700);
-
-		zStep(2);
-		if(debugMode || SensorValue(killSensor) == 1){
-			return;
-		}
-		wait1Msec(700);
-
-		zStep(-2);
-		if(debugMode || SensorValue(killSensor) == 1){
-			return;
-		}
-		wait1Msec(700);
-
-
-		/*
 		// z = 0
+		fillSquare();
 		if(debugMode || SensorValue(killSensor) == 1){
-			fillSquare();
+			return;
 		}
 		wait1Msec(1000);
 		zStep(1);
 
 		// z = 1
+		fillSquare();
 		if(debugMode || SensorValue(killSensor) == 1){
-			fillSquare();
+			return;
 		}
 		wait1Msec(1000);
 		zStep(1);
 
 		// z = 2
+		fillSquare();
 		if(debugMode || SensorValue(killSensor) == 1){
-			fillSquare();
+			return;
 		}
 		wait1Msec(1000);
 		zStep(1);
 
 		// z = 3
+		fillSquare();
 		if(debugMode || SensorValue(killSensor) == 1){
-			fillSquare();
+			return;
 		}
 		wait1Msec(1000);
 		zStep(1);
 
 		// z = 4
+		fillSquare();
 		if(debugMode || SensorValue(killSensor) == 1){
-			fillSquare();
+			return;
 		}
 		wait1Msec(1000);
 		zStep(1);
-		*/
+
 
 		// DON'T DO THIS
 		// it'll smash the 3d object
@@ -566,6 +549,8 @@ void printer3d(){
 		programComplete = true;
 }
 
+
+// Y X Z, -Y, -X, -Z
 void debugCursor(){
 	while(SensorValue(killSensor) == 0)		// true IS pressed in
 	{
